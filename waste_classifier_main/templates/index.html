@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Waste Classifier</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 1200px;
+        width: 100%;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 30px;
+        align-items: start;
+      }
+
+      .video-section {
+        position: relative;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .video-container {
+        position: relative;
+        width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      #videoElement {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .video-overlay {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .recording-indicator {
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .recording-dot {
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #45a049);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+      }
+
+      .results-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      .results-header {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      .results-header h2 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+
+      .current-classification {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .classification-label {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .classification-confidence {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .classification-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+
+      .food-waste {
+        color: #ff9800;
+      }
+      .recycling {
+        color: #4caf50;
+      }
+      .trash {
+        color: #f44336;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      .confidence-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+
+      .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 5px;
+        transition: width 0.5s ease;
+      }
+
+      .tips-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .tips-section h3 {
+        margin-bottom: 15px;
+        color: #fff;
+      }
+
+      .tip-item {
+        margin-bottom: 10px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+        font-size: 0.9rem;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: white;
+      }
+
+      .spinner {
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🤖 AI Waste Classifier: CARF Academy</h1>
+        <p>Point your camera at waste items to automatically classify them</p>
+      </div>
+
+      <div class="main-content">
+        <div class="video-section">
+          <div class="video-container">
+            <video id="videoElement" autoplay muted></video>
+            <div class="video-overlay">
+              <div class="recording-indicator">
+                <div class="recording-dot"></div>
+                LIVE
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button class="btn btn-primary" onclick="startCamera()">
+              Start Camera
+            </button>
+            <button class="btn btn-secondary" onclick="stopCamera()">
+              Stop Camera
+            </button>
+          </div>
+        </div>
+
+        <div class="results-panel">
+          <div class="results-header">
+            <h2>Classification Results</h2>
+            <p>Real-time waste classification</p>
+          </div>
+
+          <div class="current-classification">
+            <div class="classification-icon" id="classificationIcon">📦</div>
+            <div class="classification-label" id="classificationLabel">
+              Ready to classify
+            </div>
+            <div
+              class="classification-confidence"
+              id="classificationConfidence"
+            >
+              Point camera at waste item
+            </div>
+            <div class="confidence-bar">
+              <div
+                class="confidence-fill"
+                id="confidenceFill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number" id="totalItems">0</div>
+              <div class="stat-label">Items Classified</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="accuracy">0%</div>
+              <div class="stat-label">Avg. Confidence</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="foodWasteCount">0</div>
+              <div class="stat-label">Food Waste</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="recyclingCount">0</div>
+              <div class="stat-label">Recycling</div>
+            </div>
+          </div>
+
+          <div class="tips-section">
+            <h3>💡 Tips for Better Classification</h3>
+            <div class="tip-item">• Hold items steady for 2-3 seconds</div>
+            <div class="tip-item">• Ensure good lighting conditions</div>
+            <div class="tip-item">• Keep items centered in frame</div>
+            <div class="tip-item">• Try different angles for unclear items</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+      let videoElement = document.getElementById("videoElement");
+      let stream = null;
+      let isClassifying = false;
+      let socket = null;
+      let canvas = null;
+      let ctx = null;
+      let stats = {
+        totalItems: 0,
+        foodWasteCount: 0,
+        recyclingCount: 0,
+        trashCount: 0,
+        totalConfidence: 0,
+      };
+
+      const classificationIcons = {
+        "Food Waste": "🍎",
+        Recycling: "♻️",
+        Trash: "🗑️",
+      };
+
+      const classificationColors = {
+        "Food Waste": "food-waste",
+        Recycling: "recycling",
+        Trash: "trash",
+      };
+
+      function initializeSocket() {
+        socket = io();
+
+        socket.on("connect", () => {
+          console.log("Connected to server");
+          socket.emit("get_model_status");
+        });
+
+        socket.on("disconnect", () => {
+          console.log("Disconnected from server");
+        });
+
+        socket.on("model_status", (data) => {
+          if (!data.loaded) {
+            alert(
+              "Warning: Classification model not loaded on server. Please check the model file."
+            );
+          }
+        });
+
+        socket.on("classification_result", (data) => {
+          if (data.success) {
+            updateClassification(data.class, data.confidence);
+            updateStats(data.class, data.confidence);
+          } else {
+            console.error("Classification error:", data.error);
+          }
+        });
+
+        socket.on("classification_status", (data) => {
+          console.log("Classification status:", data.active);
+        });
+      }
+
+      function createCanvas() {
+        if (!canvas) {
+          canvas = document.createElement("canvas");
+          ctx = canvas.getContext("2d");
+        }
+      }
+
+      function captureFrame() {
+        if (!stream || !isClassifying) return;
+
+        createCanvas();
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+
+        ctx.drawImage(videoElement, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg", 0.8);
+
+        socket.emit("classify_frame", { image: imageData });
+      }
+
+      async function startCamera() {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 390 },
+          });
+          videoElement.srcObject = stream;
+
+          // Wait for video to load
+          videoElement.onloadedmetadata = () => {
+            videoElement.play();
+          };
+
+          // Start classification
+          if (!isClassifying) {
+            isClassifying = true;
+            socket.emit("start_classification");
+            startClassificationLoop();
+          }
+        } catch (err) {
+          console.error("Error accessing camera:", err);
+          alert("Could not access camera. Please check permissions.");
+        }
+      }
+
+      function stopCamera() {
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          videoElement.srcObject = null;
+          stream = null;
+          isClassifying = false;
+
+          if (socket) {
+            socket.emit("stop_classification");
+          }
+
+          // Reset to initial state
+          document.getElementById("classificationIcon").textContent = "📦";
+          document.getElementById("classificationLabel").textContent =
+            "Ready to classify";
+          document.getElementById("classificationConfidence").textContent =
+            "Point camera at waste item";
+          document.getElementById("confidenceFill").style.width = "0%";
+        }
+      }
+
+      function startClassificationLoop() {
+        if (!isClassifying) return;
+
+        captureFrame();
+
+        // Classify every 1.5 seconds
+        setTimeout(() => {
+          if (isClassifying) {
+            startClassificationLoop();
+          }
+        }, 1500);
+      }
+
+      function updateClassification(label, confidence) {
+        const icon = classificationIcons[label];
+        const colorClass = classificationColors[label];
+        const confidencePercent = Math.round(confidence * 100);
+
+        document.getElementById("classificationIcon").textContent = icon;
+        document.getElementById("classificationLabel").textContent = label;
+        document.getElementById(
+          "classificationLabel"
+        ).className = `classification-label ${colorClass}`;
+        document.getElementById(
+          "classificationConfidence"
+        ).textContent = `${confidencePercent}% confidence`;
+        document.getElementById(
+          "confidenceFill"
+        ).style.width = `${confidencePercent}%`;
+      }
+
+      function updateStats(label, confidence) {
+        stats.totalItems++;
+        stats.totalConfidence += confidence;
+
+        if (label === "Food Waste") stats.foodWasteCount++;
+        else if (label === "Recycling") stats.recyclingCount++;
+        else stats.trashCount++;
+
+        const avgConfidence = Math.round(
+          (stats.totalConfidence / stats.totalItems) * 100
+        );
+
+        document.getElementById("totalItems").textContent = stats.totalItems;
+        document.getElementById("accuracy").textContent = `${avgConfidence}%`;
+        document.getElementById("foodWasteCount").textContent =
+          stats.foodWasteCount;
+        document.getElementById("recyclingCount").textContent =
+          stats.recyclingCount;
+      }
+
+      // Initialize everything on page load
+      window.addEventListener("load", () => {
+        initializeSocket();
+        startCamera();
+      });
+    </script>
+  </body>
+</html>

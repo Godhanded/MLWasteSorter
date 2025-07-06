@@ -1,0 +1,8 @@
+venv
+.vscode
+__pycache__
+*.pyc
+archive.zip
+dataset
+build
+dist
