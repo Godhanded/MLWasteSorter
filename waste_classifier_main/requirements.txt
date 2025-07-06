@@ -1,7 +1,7 @@
 Flask
 Flask-SocketIO
 tensorflow
-opencv-python
+opencv-python-headless
 numpy
 Pillow
 python-socketio

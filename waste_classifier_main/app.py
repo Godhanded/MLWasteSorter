@@ -218,7 +218,7 @@ if __name__ == '__main__':
         os.makedirs('templates')
     
     print("Starting Flask server...")
-    print("Open http://localhost:5000 in your browser")
+    print("Open http://localhost:10000 in your browser")
     
     # Run the Flask-SocketIO server
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=10000, allow_unsafe_werkzeug=True)
